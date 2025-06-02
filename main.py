@@ -13,12 +13,14 @@ def fetch_trend():
 
 def generate_audio(text):
     tts = gTTS(text)
+    os.makedirs("output", exist_ok=True)
     tts.save("output/voice.mp3")
 
 def make_video():
     clip = VideoFileClip("assets/background.mp4").subclip(0, 60)
     audio = AudioFileClip("output/voice.mp3")
     final = clip.set_audio(audio)
+    os.makedirs("output", exist_ok=True)
     final.write_videofile("output/final.mp4", fps=24)
 
 def make_thumbnail(topic):
@@ -26,6 +28,7 @@ def make_thumbnail(topic):
     draw = ImageDraw.Draw(base)
     font = ImageFont.load_default()
     draw.text((50, 300), topic, fill="white", font=font)
+    os.makedirs("output", exist_ok=True)
     base.save("output/thumbnail.jpg")
 
 def main():
@@ -38,8 +41,13 @@ def main():
     make_thumbnail(topic)
     upload_video("output/final.mp4", topic, script, "output/thumbnail.jpg")
 
-schedule.every().day.at("09:00").do(main)
-
-while True:
-    schedule.run_pending()
-    time.sleep(60)
+if __name__ == "__main__":
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        # Running in GitHub Actions → run once
+        main()
+    else:
+        # Running locally → use schedule
+        schedule.every().day.at("09:00").do(main)
+        while True:
+            schedule.run_pending()
+            time.sleep(60)
